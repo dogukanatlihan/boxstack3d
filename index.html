@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>BOXSTACK — a Box3D game</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='6' width='20' height='20' rx='4' transform='rotate(45 16 16)' fill='%23ffb454'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+
+      <header class="hud-top">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span class="brand-name">BOXSTACK</span>
+          <span class="brand-sub">powered by Box3D + three.js</span>
+        </div>
+        <div class="scores">
+          <div class="score-block">
+            <span class="score-label">HEIGHT</span>
+            <span class="score-value" id="score">0</span>
+          </div>
+          <div class="score-block dim">
+            <span class="score-label">BEST</span>
+            <span class="score-value" id="best">0</span>
+          </div>
+        </div>
+      </header>
+
+      <div id="combo" class="combo hidden"></div>
+
+      <div id="overlay" class="overlay">
+        <div class="overlay-card">
+          <h1 class="title">BOX<span>STACK</span></h1>
+          <p class="tagline">Drop the swinging crate. Build the tower.<br />Perfect drops chain combos.</p>
+          <button id="start-btn" class="btn">TAP / SPACE TO DROP</button>
+          <p class="credits">physics: <b>Box3D</b> (Erin Catto) compiled to WASM &middot; render: three.js</p>
+        </div>
+      </div>
+
+      <div id="gameover" class="overlay hidden">
+        <div class="overlay-card">
+          <h1 class="title small">TOWER DOWN</h1>
+          <p class="final" id="final-score">0</p>
+          <p class="tagline" id="final-msg">The crates remember.</p>
+          <button id="retry-btn" class="btn">STACK AGAIN</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

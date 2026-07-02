@@ -1,0 +1,16 @@
+node_modules/
+dist/
+
+# Box3D upstream clone — see README "Rebuilding the WASM"
+vendor/
+
+# local tooling artifacts
+.qq/
+.playwright-mcp/
+scripts/
+__pycache__/
+
+# test screenshots
+boxstack-tower.png
+marker-check.png
+portrait-check.png
