@@ -188,6 +188,8 @@ let craneMesh = null;
 let fallingBody = null;
 let fallTimer = 0;
 let towerTopY = BASE_HALF.y; // top surface of current tower
+let pendingGameOverMsg = '';
+let collapseTimer = 0;
 let camY = 6;
 let shake = 0;
 let accumulator = 0;
@@ -213,6 +215,14 @@ function resetGame() {
     fallingBody = null;
   }
   phys.reset();
+
+  // static ground plane matching the visual floor disc (top surface at y = -BASE_HALF.y)
+  phys.createBox({
+    type: BODY_STATIC,
+    position: [0, -BASE_HALF.y - 0.5, 0],
+    halfExtents: [60, 0.5, 60],
+    friction: 0.8,
+  });
 
   // static base pedestal
   phys.createBox({
@@ -278,18 +288,37 @@ function showCombo(text, hot) {
   comboEl.style.animation = '';
 }
 
-function gameOver(message) {
-  mode = 'over';
+// knock the tower loose and let Box3D tumble it before showing the fail screen
+function startCollapse(message) {
+  if (mode === 'collapsing' || mode === 'over') return;
+  mode = 'collapsing';
+  pendingGameOverMsg = message;
+  collapseTimer = 0;
   if (craneMesh) {
     scene.remove(craneMesh);
     craneMesh = null;
   }
+  if (fallingBody) {
+    bodies.push({ ...fallingBody, restY: fallingBody.mesh.position.y });
+    fallingBody = null;
+  }
+  for (const b of bodies) {
+    if (b.isBase) continue;
+    const angle = Math.random() * Math.PI * 2;
+    const kick = 7 + Math.random() * 8;
+    phys.applyImpulse(b.handle, Math.cos(angle) * kick, 3 + Math.random() * 3, Math.sin(angle) * kick);
+    phys.setAngularVelocity(b.handle, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5);
+  }
+}
+
+function finalizeGameOver() {
+  mode = 'over';
   best = Math.max(best, score);
   localStorage.setItem('boxstack-best', String(best));
   bestEl.textContent = best;
   finalScoreEl.textContent = score;
-  finalMsgEl.textContent = message;
-  setTimeout(() => gameoverEl.classList.remove('hidden'), 550);
+  finalMsgEl.textContent = pendingGameOverMsg;
+  gameoverEl.classList.remove('hidden');
 }
 
 function resolveLanding() {
@@ -301,7 +330,7 @@ function resolveLanding() {
   const supported = dx < CRATE_HALF.x * 2 * 0.92 && dz < CRATE_HALF.z * 2 * 0.92 && s.y > towerTopY - 0.3;
 
   if (!supported) {
-    gameOver(offset > 3 ? 'Missed the tower entirely.' : 'It slid into the void.');
+    startCollapse(offset > 3 ? 'Missed the tower entirely.' : 'It slid off the stack.');
     return;
   }
 
@@ -351,7 +380,7 @@ function physicsTick() {
       fallingBody.mesh.quaternion.set(tmp.qx, tmp.qy, tmp.qz, tmp.qw);
 
       if (tmp.y < KILL_Y) {
-        gameOver('Gravity always wins.');
+        startCollapse('Gravity always wins.');
         return;
       }
       const speed = Math.hypot(tmp.vx, tmp.vy, tmp.vz);
@@ -361,12 +390,29 @@ function physicsTick() {
     }
   }
 
+  // let the collapse play out, then show the fail screen once the rubble settles
+  if (mode === 'collapsing') {
+    collapseTimer += FIXED_DT;
+    let allQuiet = true;
+    const s = tmp;
+    for (const b of bodies) {
+      if (b.isBase) continue;
+      if (phys.readBody(b.handle, s) && Math.hypot(s.vx, s.vy, s.vz) > 0.4) {
+        allQuiet = false;
+        break;
+      }
+    }
+    if ((allQuiet && collapseTimer > 1.2) || collapseTimer > 4.5) {
+      finalizeGameOver();
+    }
+  }
+
   // topple watch: if any placed crate leaves the tower, the run ends
   if (mode === 'swing' || mode === 'falling') {
     for (const b of bodies) {
       if (b.isBase) continue;
       if (b.mesh.position.y < KILL_Y || b.mesh.position.y < b.restY - 2.2) {
-        gameOver('The tower gave way.');
+        startCollapse('The tower gave way.');
         break;
       }
     }
