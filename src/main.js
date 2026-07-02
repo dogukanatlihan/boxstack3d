@@ -302,13 +302,6 @@ function startCollapse(message) {
     bodies.push({ ...fallingBody, restY: fallingBody.mesh.position.y });
     fallingBody = null;
   }
-  for (const b of bodies) {
-    if (b.isBase) continue;
-    const angle = Math.random() * Math.PI * 2;
-    const kick = 7 + Math.random() * 8;
-    phys.applyImpulse(b.handle, Math.cos(angle) * kick, 3 + Math.random() * 3, Math.sin(angle) * kick);
-    phys.setAngularVelocity(b.handle, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 5);
-  }
 }
 
 function finalizeGameOver() {
